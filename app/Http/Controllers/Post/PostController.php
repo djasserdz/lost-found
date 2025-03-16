@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Post;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use App\Policies\PostPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response as FacadesResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -54,7 +56,6 @@ class PostController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('posts_images', 'public');
-            dd($path);
         }
 
         $post = $user->posts()->create([
@@ -92,6 +93,26 @@ class PostController extends Controller
      */
     public function update(Request $request, string $id)
     {
+
+        $post = Post::find($id);
+        if (!$post) {
+            return response()->json([
+                'message' => 'Post not found',
+
+            ], Response::HTTP_NOT_FOUND);
+        }
+        /*if (!Gate::allows('update_post', $post)) {
+            return response()->json([
+                'message' => 'Unautherized',
+            ], Response::HTTP_UNAUTHORIZED);
+        }*/
+
+        if ($request->user()->cannot('update', $post)) {
+            return response()->json([
+                'message' => 'Unautherized',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+        dd('ta9dar');
         $validation = Validator::make($request->only('title', 'description', 'image', 'categories'), [
             'title' => ['required'],
             'description' => ['required'],
@@ -106,13 +127,8 @@ class PostController extends Controller
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $post = Post::find($id);
-        if (!$post) {
-            return response()->json([
-                'message' => 'Post not found',
 
-            ], Response::HTTP_NOT_FOUND);
-        }
+
 
         $path = null;
 

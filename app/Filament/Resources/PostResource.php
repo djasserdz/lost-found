@@ -22,6 +22,8 @@ use Filament\Tables\Table;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action;
+
 
 class PostResource extends Resource
 {
@@ -75,6 +77,7 @@ class PostResource extends Resource
                 TextColumn::make('title')->searchable(),
                 TextColumn::make('description')->limit(30),
                 TextColumn::make('user.name')->label('Owner')->searchable(),
+                TextColumn::make('categories.name')->label('Categories'),
                 BooleanColumn::make('approved')
                     ->label('Approved')
                     ->trueIcon('heroicon-o-check')
@@ -86,6 +89,14 @@ class PostResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('Approve')
+                    ->icon('heroicon-o-document-text')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (Post $record) {
+                        $record->update(['approved' => true]);
+                    })
+                    ->successNotificationTitle('Post Approved!'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
